@@ -20,7 +20,6 @@ async fn age(
 
 #[tokio::main]
 pub async fn main() {
-    std::env::set_var("DISCORD_TOKEN", "MTA5MTg2MDQ3NDQxMDMwMzUzOQ.GYmDsg.9oCDZNs6-jZTvOru-9W3rRGwXRaXDg8ISorLLw");
     //file1::func("hehe");
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
