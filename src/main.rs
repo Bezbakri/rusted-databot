@@ -1,8 +1,10 @@
 use poise::serenity_prelude as serenity;
 
-struct Data {} // User data, which is stored and accessible in all command invocations
+pub struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
+
+mod module1;
 
 /// Displays your or another user's account creation date
 #[poise::command(slash_command, prefix_command)]
@@ -17,10 +19,12 @@ async fn age(
 }
 
 #[tokio::main]
-async fn main() {
+pub async fn main() {
+    std::env::set_var("DISCORD_TOKEN", "MTA5MTg2MDQ3NDQxMDMwMzUzOQ.GYmDsg.9oCDZNs6-jZTvOru-9W3rRGwXRaXDg8ISorLLw");
+    //file1::func("hehe");
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age()],
+            commands: vec![age(), module1::gpa()],
             ..Default::default()
         })
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
