@@ -20,7 +20,6 @@ async fn age(
 
 #[tokio::main]
 pub async fn main() {
-    //file1::func("hehe");
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![age(), module1::gpa()],
