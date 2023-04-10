@@ -1,4 +1,5 @@
 use poise::serenity_prelude as serenity;
+use dotenv::dotenv;
 
 struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -18,7 +19,7 @@ async fn age(
 
 #[tokio::main]
 async fn main() {
-    std::env::set_var("DISCORD_TOKEN", "MTA5MTg2MDQ3NDQxMDMwMzUzOQ.GYmDsg.9oCDZNs6-jZTvOru-9W3rRGwXRaXDg8ISorLLw");
+    dotenv().ok();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![age()],
