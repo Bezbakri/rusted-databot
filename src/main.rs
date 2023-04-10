@@ -29,34 +29,12 @@ async fn member_count(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-/// Generates a random insult directed at Chris
-#[poise::command(slash_command, prefix_command)]
-async fn the_truth(ctx: Context<'_>) -> Result<(), Error> {
-    let insults = vec![
-        "cockster",
-        "idiot",
-        "loser",
-        "buffoon",
-        "moron",
-        "dunce",
-        "fool",
-        "wanker",
-        "dog",
-    ];
-    let insult = insults
-        .choose(&mut thread_rng())
-        .expect("Insult list should not be empty");
-    let response = format!("Chris is a {}", insult);
-    ctx.say(response).await?;
-    Ok(())
-}
-
 #[tokio::main]
 async fn main() {
     dotenv().ok();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), the_truth(), member_count()],
+            commands: vec![age(), member_count()],
             ..Default::default()
         })
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
