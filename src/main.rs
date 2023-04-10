@@ -17,12 +17,22 @@ async fn age(
     Ok(())
 }
 
+/// Displays the member count of the server
+#[poise::command(slash_command, prefix_command)]
+async fn member_count(ctx: Context<'_>) -> Result<(), Error> {
+    let guild = ctx.guild().ok_or("Could not get guild")?;
+    let member_count = guild.member_count;
+    let response = format!("This server has {} members", member_count);
+    ctx.say(response).await?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     dotenv().ok();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age()],
+            commands: vec![age(), member_count()],
             ..Default::default()
         })
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
