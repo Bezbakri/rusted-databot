@@ -3,9 +3,12 @@ use dotenv::dotenv;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-struct Data {} // User data, which is stored and accessible in all command invocations
+
+pub struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
+
+mod bez_stuff;
 
 /// Displays your or another user's account creation date
 #[poise::command(slash_command, prefix_command)]
@@ -34,7 +37,7 @@ async fn main() {
     dotenv().ok();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), member_count()],
+            commands: vec![age(), member_count(), bez_stuff::channel_count()],
             ..Default::default()
         })
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
