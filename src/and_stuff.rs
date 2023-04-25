@@ -1,6 +1,7 @@
 use dotenv::dotenv;
 use poise::serenity_prelude as serenity;
 use serenity::{ChannelId, GatewayIntents, Message, MessageId};
+use serenity::model::id::GuildId;
 
 use super::{Context, Error};
 
@@ -31,7 +32,7 @@ pub async fn count_messages(
 
     loop {
         let messages = channel
-        .messages(ctx.discord(), |retriever| {
+        .messages(ctx.serenity_context(), |retriever| { //.messages(ctx.discord(), |retriever| {
             if let Some(last_id) = last_message_id {
                 retriever.limit(100).before(last_id.0 - 1)
             } else {
@@ -51,6 +52,27 @@ pub async fn count_messages(
 
     let reply_text = format!("There are {} messages in <#{}>.", count, channel.0);
     ctx.say(reply_text).await?;
+    Ok(())
+}
+
+#[poise::command(slash_command, prefix_command)]
+pub async fn graph_users(ctx: Context<'_>) -> Result<(), Error> { // Move this fn to your own file if you want chris
+    let guild_id = match ctx.guild_id() {
+        Some(id) => id,
+        None => {
+            poise::say_reply(ctx, "This command can only be used in a server.").await?;
+            return Ok(());
+        }
+    };
+
+    let guild = ctx.guild(); //returns a Result<Guild> object
+    let member_list = guild.unwrap().members; //Returns HashMap<Userid, Member> Member is an obj
+    for member in member_list.values() {    //Iterates and extracts name + date joined
+        let user = &member.user;
+        let join_time = member.joined_at.unwrap();
+        poise::say_reply(ctx, format!("User: {} | Joined at: {}", user.name, join_time)).await?;
+    }
+
     Ok(())
 }
 
