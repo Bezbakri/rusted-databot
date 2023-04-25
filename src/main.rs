@@ -1,4 +1,11 @@
 use poise::serenity_prelude as serenity;
+use dotenv::dotenv;
+
+use plotly::{Plot, Scatter};
+use std::collections::HashMap;
+use plotly::Layout;
+use plotly::layout::Axis;
+use chrono::prelude::*;
 
 pub struct Data {} // User data, which is stored and accessible in all command invocations
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -6,7 +13,10 @@ type Context<'a> = poise::Context<'a, Data, Error>;
 
 mod module1;
 
-/// Displays your or another user's account creation date
+mod bez_stuff;
+//mod oh_stuff;
+mod and_stuff;
+
 #[poise::command(slash_command, prefix_command)]
 async fn age(
     ctx: Context<'_>,
@@ -19,16 +29,15 @@ async fn age(
 }
 
 #[tokio::main]
-pub async fn main() {
-    std::env::set_var("DISCORD_TOKEN", "MTA5MTg2MDQ3NDQxMDMwMzUzOQ.GYmDsg.9oCDZNs6-jZTvOru-9W3rRGwXRaXDg8ISorLLw");
-    //file1::func("hehe");
+async fn main() {
+    dotenv().ok();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), module1::gpa()],
+            commands: vec![age(), and_stuff::member_count(), and_stuff::count_messages(), bez_stuff::channel_count(), /*oh_stuff::server_info(), oh_stuff::start_OH()*/],
             ..Default::default()
         })
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
-        .intents(serenity::GatewayIntents::non_privileged())
+        .intents(serenity::GatewayIntents::all()) //changed from non_priviledged
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;
