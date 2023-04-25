@@ -31,11 +31,11 @@ async fn main() {
     dotenv().ok();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), and_stuff::member_count(), bez_stuff::channel_count(), /*oh_stuff::server_info()*/],
+            commands: vec![age(), and_stuff::member_count(), and_stuff::count_messages(), bez_stuff::channel_count(),  /*oh_stuff::server_info()*/],
             ..Default::default()
         })
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
-        .intents(serenity::GatewayIntents::non_privileged())
+        .intents(serenity::GatewayIntents::all()) //changed from non_priviledged
         .setup(|ctx, _ready, framework| {
             Box::pin(async move {
                 poise::builtins::register_globally(ctx, &framework.options().commands).await?;

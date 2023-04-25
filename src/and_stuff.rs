@@ -1,5 +1,6 @@
-use poise::serenity_prelude as serenity;
 use dotenv::dotenv;
+use poise::serenity_prelude as serenity;
+use serenity::{ChannelId, GatewayIntents, Message, MessageId};
 
 use super::{Context, Error};
 
@@ -16,6 +17,40 @@ pub async fn member_count(ctx: Context<'_>) -> Result<(), Error> {
     let member_count = guild.member_count;
     let response = format!("This server has {} members", member_count);
     ctx.say(response).await?;
+    Ok(())
+}
+
+// Displays message count in a channel
+#[poise::command(slash_command, prefix_command)]
+pub async fn count_messages(
+    ctx: Context<'_>,
+    channel: ChannelId,
+) -> Result<(), Error> {
+    let mut count = 0;
+    let mut last_message_id : Option<MessageId> = None;
+
+    loop {
+        let messages = channel
+        .messages(ctx.discord(), |retriever| {
+            if let Some(last_id) = last_message_id {
+                retriever.limit(100).before(last_id.0 - 1)
+            } else {
+                retriever.limit(100)
+            }
+        })
+        .await?;
+
+        let len = messages.len();
+        if len == 0 {
+            break;
+        }
+
+        count += len;
+        last_message_id = messages.last().map(|m| m.id);
+    }
+
+    let reply_text = format!("There are {} messages in <#{}>.", count, channel.0);
+    ctx.say(reply_text).await?;
     Ok(())
 }
 
