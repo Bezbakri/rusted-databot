@@ -6,8 +6,8 @@ use poise::serenity_prelude::CacheAndHttp;
 
 use super::{Context, Error};
 
-static mut QUEUE: VecDeque<serenity::Member> = VecDeque::new();
-static mut OPEN: bool = false;
+const QUEUE: VecDeque<serenity::Member> = VecDeque::new();
+const OPEN: bool = false;
 
 #[poise::command(slash_command, prefix_command)]
 pub async fn server_info(
@@ -27,30 +27,34 @@ pub async fn server_info(
 }
 
 #[poise::command(slash_command, prefix_command)]
-pub async unsafe fn start_OH(
+pub async fn start_OH(
     ctx: Context<'_>,
 )
     -> Result<(), Error> {
     let guild = ctx.guild().unwrap();
     // get "CA" role
-    let ta_role: serenity::Role;
+    let mut ta_role: Option<serenity::Role> = None;
     for role in guild.roles {
         if role.1.name == "CA" {
-            ta_role = role.1;
+            ta_role = Some(role.1);
         }
     }
-    // if user has "CA" role then start OH
-    // i have no idea how to do this
-    if ctx.author().has_role().await.unwrap() {
-        let response = format!("OH has started!");
-        ctx.say(response).await?;
-        OPEN = true;
+    if ta_role == None {
+        ctx.say("Not a CA").await?;
+    }
+    // iterate over user's roles
+    for role in ctx.author_member().await.unwrap().roles.clone() {
+        if role == ta_role.clone().unwrap().id {
+            let response = format!("OH has started!");
+            ctx.say(response).await?;
+            // OPEN = true;
+        }
     }
     Ok(())
 }
 
 #[poise::command(slash_command, prefix_command)]
-pub async unsafe fn print_queue(
+pub async fn print_queue(
     ctx: Context<'_>,
 )
     -> Result<(), Error> {
