@@ -12,7 +12,7 @@ type Error = Box<dyn std::error::Error + Send + Sync>;
 type Context<'a> = poise::Context<'a, Data, Error>;
 
 mod bez_stuff;
-mod oh_stuff;
+//mod oh_stuff;
 mod and_stuff;
 
 #[poise::command(slash_command, prefix_command)]
@@ -31,7 +31,7 @@ async fn main() {
     dotenv().ok();
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![age(), and_stuff::member_count(), and_stuff::count_messages(), bez_stuff::channel_count(), oh_stuff::server_info(), oh_stuff::start_OH()],
+            commands: vec![age(), and_stuff::member_count(), and_stuff::count_messages(), bez_stuff::channel_count(), /*oh_stuff::server_info(), oh_stuff::start_OH()*/],
             ..Default::default()
         })
         .token(std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN"))
