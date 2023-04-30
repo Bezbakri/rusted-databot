@@ -7,10 +7,10 @@ use super::{Context, Error};
 
 use plotly::{Plot, Scatter};
 use std::collections::HashMap;
-use plotly::common::Mode;
-// use plotly::Layout;
-// use plotly::layout::Axis;
- use chrono::prelude::*;
+use plotly::common::{Mode, Title};
+use plotly::Layout;
+use plotly::layout::Axis;
+use chrono::prelude::*;
 
 /// Displays the member count of the server
 #[poise::command(slash_command, prefix_command)]
@@ -57,7 +57,7 @@ pub async fn count_messages(
 }
 
 #[poise::command(slash_command, prefix_command)]
-pub async fn graph_users(ctx: Context<'_>) -> Result<(), Error> { // Move this fn to your own file if you want chris
+pub async fn new_users(ctx: Context<'_>) -> Result<(), Error> { // Move this fn to your own file if you want chris
     let guild_id = match ctx.guild_id() {
         Some(id) => id,
         None => {
@@ -67,68 +67,83 @@ pub async fn graph_users(ctx: Context<'_>) -> Result<(), Error> { // Move this f
     };
 
     let guild = ctx.guild(); //returns a Result<Guild> object
+
     let member_list = guild.unwrap().members; //Returns HashMap<Userid, Member> Member is an obj
-    for member in member_list.values() {    //Iterates and extracts name + date joined
+    let mut new_users_per_date = HashMap::new();
+
+    for member in member_list.values() {    //Iterates and extracts name + date joined, counts number of new users per date
         let user = &member.user;
         let join_time = member.joined_at.unwrap();
-        poise::say_reply(ctx, format!("User: {} | Joined at: {}", user.name, join_time)).await?;
+        // let join_minute = join_time.minute();
+        let join_date = join_time.date_naive();
+        //poise::say_reply(ctx, format!("User: {} | Joined at: {}", user.name, join_time)).await?;
+
+        //Increment users_per_date with member's join date
+        let count = new_users_per_date.entry(join_date).or_insert(0);
+        *count += 1;
     }
 
+    // Put number of users per time into a vector and sort in order of date
+    let mut sorted_dates: Vec<_> = new_users_per_date.into_iter().collect();
+    sorted_dates.sort_by_key(|&(k, _)| k);
+
+    let (mode_date, mode_value) = sorted_dates.iter()
+        .max_by_key(|&(_, v)| v).unwrap();
+    let highest_date = format!("Highest join date was: {}, with {} new server members", mode_date, mode_value); 
+
+    let vec_str = sorted_dates
+    .iter()
+    .map(|(a, b)| format!("New users on {}: {}", a, b))
+    .collect::<Vec<_>>()
+    .join("\n");
+
+    ctx.say(vec_str).await?;
+    ctx.say(highest_date).await?;
     Ok(())
 }
 
-// /// Graphs the number of users in the server over time
-#[poise::command(slash_command)]
-pub async fn user_graph(ctx: Context<'_>) -> Result<(), Error> {
-    let guild = ctx.guild().ok_or("Could not get guild")?;
-
-    // Collect member count for each day
-    let mut member_counts = HashMap::new();
-    // Create an Http reference from the Context
-    let http = ctx.as_ref().http().clone();
-    let members = guild.members(&http, Some(1000), None).await?;
-    for member in members {
-        if let Some(joined_at) = member.joined_at {
-            let date = joined_at.date().naive_utc();
-            *member_counts.entry(date).or_insert(0) += 1;
+#[poise::command(slash_command, prefix_command)]
+pub async fn total_users(ctx: Context<'_>) -> Result<(), Error> { // Move this fn to your own file if you want chris
+    let guild_id = match ctx.guild_id() {
+        Some(id) => id,
+        None => {
+            poise::say_reply(ctx, "This command can only be used in a server.").await?;
+            return Ok(());
         }
+    };
+    
+    let guild = ctx.guild(); //returns a Result<Guild> object
+
+    let member_list = guild.unwrap().members; //Returns HashMap<Userid, Member> Member is an obj
+    let mut new_users_per_date = HashMap::new();
+
+    for member in member_list.values() {    //Iterates and extracts name + date joined, counts number of new users per date
+        let user = &member.user;
+        let join_time = member.joined_at.unwrap();
+        let join_date = join_time.date_naive();
+
+        //Increment users_per_date with member's join date
+        let count = new_users_per_date.entry(join_date).or_insert(0);
+        *count += 1;
     }
 
-    // Sort member counts by date
-    let mut member_counts: Vec<(NaiveDate, usize)> = member_counts.into_iter().collect();
-    member_counts.sort_by_key(|(date, _)| *date);
+    // Put number of users per time into a vector and sort in order of date
+    let mut sorted_dates: Vec<_> = new_users_per_date.into_iter().collect();
+    sorted_dates.sort_by_key(|&(k, _)| k);
 
-//     // Create plot
-    let x: Vec<NaiveDate> = member_counts.iter().map(|(x, _)| *x).collect();
-    let y: Vec<usize> = member_counts.iter().map(|(_, y)| *y).collect();
+    let mut cumulative_dates = HashMap::new();
+    let mut total = 0;
+    for (date, value) in sorted_dates {
+        total += value;
+        cumulative_dates.insert(date, total);
+    }
 
-    let trace = Scatter::new(x,y).mode(Mode::Lines);
-//     let trace = Scatter::new(
-//         member_counts.iter().map(|(date, _)| date.to_string()).collect(),
-//         member_counts.iter().map(|(_, count)| *count).collect(),
-//     )
-//     .name("Member Count")
-//     .mode(plotly::common::Mode::Lines);
+    let vec_str = cumulative_dates
+    .iter()
+    .map(|(a, b)| format!("Total users on {}: {}", a, b))
+    .collect::<Vec<_>>()
+    .join("\n");
 
-    let mut plot = Plot::new();
-    plot.add_trace(trace);
-
-//     let max_count = member_counts.iter().map(|(_, count)| count).max().unwrap_or(&0);
-
-//     let layout = Layout::new()
-//         .title("User Count Over Time")
-//         .x_axis(Axis::new().title("Date"))
-//         .y_axis(Axis::new().title("Member Count").range(vec![0., *max_count as f64]));
-
-//     plot.set_layout(layout);
-
-
-
-
-//     // Send plot
-//     let image = plot.to_image("png").await?;
-//     ctx.say("User count over time:", |f| f.add_file("plot.png", image.as_slice()))
-//         .await?;
-
+    ctx.say(vec_str).await?;
     Ok(())
 }
