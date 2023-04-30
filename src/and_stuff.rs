@@ -7,7 +7,6 @@ use super::{Context, Error};
 
 use plotly::{Plot, Scatter};
 use std::collections::HashMap;
-use plotly::common::{Mode, Title};
 use plotly::Layout;
 use plotly::layout::Axis;
 use chrono::prelude::*;

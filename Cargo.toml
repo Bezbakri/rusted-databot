@@ -10,7 +10,7 @@ tokio = { version = "1.4.0", features = ["rt-multi-thread", "process"] }
 dotenv = "0.15.0"
 poise = "0.5.2"
 rand = "0.8.4"
-plotly = { version = "0.5"} 
+plotly = { version = "0.5", features = ["kaleido"]}
 serde = "1.0"
 serde_json = "1.0"
 chrono = "0.4"
