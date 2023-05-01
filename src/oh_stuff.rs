@@ -1,13 +1,10 @@
-use poise::serenity_prelude as serenity;
 use std::collections::HashMap;
-use std::collections::VecDeque;
-use std::option;
-use poise::serenity_prelude::CacheAndHttp;
+use poise::serenity_prelude as serenity;
+use poise::futures_util::Stream;
+use serde::de::SeqAccess;
 
 use super::{Context, Error};
 
-const QUEUE: VecDeque<serenity::Member> = VecDeque::new();
-const OPEN: bool = false;
 
 #[poise::command(slash_command, prefix_command)]
 pub async fn server_info(
@@ -15,57 +12,39 @@ pub async fn server_info(
 )
     -> Result<(), Error> {
     let guild = ctx.guild().unwrap();
+
+    let mut map: HashMap<String, i32> = HashMap::new();
+
+    let messages = ctx.channel_id()
+        .messages(ctx.serenity_context(), |retriever| {
+            retriever.limit(100)
+        })
+        .await?;
+
+    // go through messages and add to map
+    for message in messages {
+        let author = message.author.name;
+        let count = map.entry(author).or_insert(0);
+        *count += 1;
+    }
+
+    let mut top3: Vec<(String, i32)> = Vec::from_iter(map.into_iter());
+    top3.sort_by(|a, b| {b.1.cmp(&a.1)});
+
+    let mut top: Vec<String> = top3.into_iter().map(|v| {v.0}).collect();
+    top.truncate(5);
+
+    let display_top_users: String = top.into_iter().reduce(|a, b| {a + "\n" + &b}).unwrap_or("".to_string());
+
     ctx.send(|b| {
         b.embed(|b| {
             b.field("Members", guild.member_count, true)
                 .title(guild.name)
+                .field("Most Active In This Channel", display_top_users, true)
         })
             .ephemeral(false)
     }).await?;
     // ctx.say(response).await?;
-    Ok(())
-}
-
-#[poise::command(slash_command, prefix_command)]
-pub async fn start_OH(
-    ctx: Context<'_>,
-)
-    -> Result<(), Error> {
-    let guild = ctx.guild().unwrap();
-    // get "CA" role
-    let mut ta_role: Option<serenity::Role> = None;
-    for role in guild.roles {
-        if role.1.name == "CA" {
-            ta_role = Some(role.1);
-        }
-    }
-    if ta_role == None {
-        ctx.say("Not a CA").await?;
-    }
-    // iterate over user's roles
-    for role in ctx.author_member().await.unwrap().roles.clone() {
-        if role == ta_role.clone().unwrap().id {
-            let response = format!("OH has started!");
-            ctx.say(response).await?;
-            // OPEN = true;
-        }
-    }
-    Ok(())
-}
-
-#[poise::command(slash_command, prefix_command)]
-pub async fn print_queue(
-    ctx: Context<'_>,
-)
-    -> Result<(), Error> {
-    let guild = ctx.guild().unwrap();
-    let mut queue_str = String::new();
-    for member in &QUEUE {
-        queue_str.push_str(member.to_string().as_str());
-        queue_str += " ";
-    }
-    let response = format!("Queue: {}", queue_str);
-    ctx.say(response).await?;
     Ok(())
 }
 
