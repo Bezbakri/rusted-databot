@@ -1,3 +1,4 @@
+// Import the required libraries and modules
 use dotenv::dotenv;
 use poise::serenity_prelude as serenity;
 use serenity::{ChannelId, GatewayIntents, Message, MessageId};
@@ -11,26 +12,37 @@ use plotly::Layout;
 use plotly::layout::Axis;
 use chrono::prelude::*;
 
-/// Displays the member count of the server
+// Define the `member_count` command that displays the member count of the server
+// This command can be invoked as a slash command or a prefix command
 #[poise::command(slash_command, prefix_command)]
 pub async fn member_count(ctx: Context<'_>) -> Result<(), Error> {
+    // Get the current guild (server) from the context
     let guild = ctx.guild().ok_or("Could not get guild")?;
+    // Get the member count from the guild
     let member_count = guild.member_count;
+    // Format the response text
     let response = format!("This server has {} members", member_count);
+    // Send the response text to the channel
     ctx.say(response).await?;
+    // Return Ok if the command execution was successful
     Ok(())
 }
 
-// Displays message count in a channel
+// Define the `count_messages` command that displays the message count in a channel
+// This command can be invoked as a slash command or a prefix command
 #[poise::command(slash_command, prefix_command)]
 pub async fn count_messages(
     ctx: Context<'_>,
     channel: ChannelId,
 ) -> Result<(), Error> {
+    // Initialize the message count to 0
     let mut count = 0;
+    // Initialize the last_message_id variable as an Option of MessageId
     let mut last_message_id : Option<MessageId> = None;
 
+    // Loop to fetch messages in batches and count them
     loop {
+        // Fetch messages from the channel using the context and the last_message_id
         let messages = channel
         .messages(ctx.serenity_context(), |retriever| { //.messages(ctx.discord(), |retriever| {
             if let Some(last_id) = last_message_id {
@@ -41,19 +53,28 @@ pub async fn count_messages(
         })
         .await?;
 
+        // Get the length of the fetched messages array
         let len = messages.len();
+        // Break the loop if no messages are fetched
         if len == 0 {
             break;
         }
 
+        // Add the length of the fetched messages array to the count
         count += len;
+        // Update the last_message_id variable
         last_message_id = messages.last().map(|m| m.id);
     }
 
+    // Format the reply text with the message count and channel ID
     let reply_text = format!("There are {} messages in <#{}>.", count, channel.0);
+    // Send the reply text to the channel
     ctx.say(reply_text).await?;
+    // Return Ok if the command execution was successful
     Ok(())
 }
+
+// Chris stuff
 
 #[poise::command(slash_command, prefix_command)]
 pub async fn new_users(ctx: Context<'_>) -> Result<(), Error> { // Move this fn to your own file if you want chris
